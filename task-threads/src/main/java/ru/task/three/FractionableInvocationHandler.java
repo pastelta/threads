@@ -8,13 +8,17 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FractionableInvocationHandler<T> implements InvocationHandler {
     private final T obj;
-    private static final int NUMBER_OF_ARGS_IN_METHOD = 5;
+
+    // Константа - количество аргументов в методе.
+    // В нашем примере не более одного, но можем указать и больше:.
+    private static final int NUMBER_OF_ARGS_IN_METHOD = 3;
     private ConcurrentHashMap<StateObject, Object> objectCache = new ConcurrentHashMap<>();
 
     public FractionableInvocationHandler(T obj) {
         this.obj = obj;
     }
 
+    //Выполним глубокое копирование объекта, с помощью методов:
     public static Object reflectionObject(Object original) {
         try {
             Constructor<?>[] constructors = original.getClass().getDeclaredConstructors();
@@ -63,6 +67,7 @@ public class FractionableInvocationHandler<T> implements InvocationHandler {
         }
     }
 
+    //Метод для проверки - можем ли получить результат из кэша.
     public static boolean check(String s, ConcurrentHashMap<StateObject, Object> objectCache) {
         if (objectCache.isEmpty()) return false;
         for (Map.Entry<StateObject, Object> entry : objectCache.entrySet()) {
