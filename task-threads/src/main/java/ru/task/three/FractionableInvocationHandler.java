@@ -8,10 +8,6 @@ import java.util.concurrent.ConcurrentHashMap;
 
 public class FractionableInvocationHandler<T> implements InvocationHandler {
     private final T obj;
-
-    // Константа - количество аргументов в методе.
-    // В нашем примере не более одного, но можем указать и больше:.
-    private static final int NUMBER_OF_ARGS_IN_METHOD = 3;
     private ConcurrentHashMap<StateObject, Object> objectCache = new ConcurrentHashMap<>();
 
     public FractionableInvocationHandler(T obj) {
@@ -24,15 +20,16 @@ public class FractionableInvocationHandler<T> implements InvocationHandler {
             Constructor<?>[] constructors = original.getClass().getDeclaredConstructors();
             Field[] fields = original.getClass().getDeclaredFields();
             List<Object> valueFieldList = new ArrayList<>();
-            Class[] paramTypes = new Class[NUMBER_OF_ARGS_IN_METHOD];
+            List<Object> constructorList = new ArrayList<>();
             for (Constructor constructor : constructors) {
-                paramTypes = constructor.getParameterTypes();
+                Class[] paramTypes = constructor.getParameterTypes();
                 for (Field field : fields) {
                     field.setAccessible(true);
                     valueFieldList.add(field.get(original));
                 }
+                constructorList.add(original.getClass().getDeclaredConstructor(paramTypes).newInstance(valueFieldList.toArray()));
             }
-            return original.getClass().getDeclaredConstructor(paramTypes).newInstance(valueFieldList.toArray());
+            return constructorList.get(0);
 
         } catch (Exception e) {
             throw new RuntimeException(e);
@@ -86,8 +83,6 @@ public class FractionableInvocationHandler<T> implements InvocationHandler {
 
         StateObject stateObject = new StateObject(objCopy.toString(), System.currentTimeMillis());
 
-        new Task().start();
-
         if (m.isAnnotationPresent(Mutator.class)) {
             result = method.invoke(obj, args);
             objCopy = copy(obj);
@@ -107,6 +102,7 @@ public class FractionableInvocationHandler<T> implements InvocationHandler {
             result = method.invoke(obj, args);
         }
 
+        new Task().start();
         //System.out.println("objectCache " + objectCache + "; currentTime " + System.currentTimeMillis());
         //System.out.println("result " + result);
 
